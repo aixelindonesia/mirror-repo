@@ -1,0 +1,80 @@
+name: Sync to Mirror
+description: >-
+  Force-push branches from the current repo to a mirror repository using an
+  SSH deploy key. Self-contained: checks out full history, loads the key,
+  and pushes. Standardized, hardened replacement for per-repo sync workflows.
+
+inputs:
+  target-repo:
+    description: "SSH URL of the mirror repo, e.g. git@github.com:owner/repo.git"
+    required: true
+  ssh-private-key:
+    description: >-
+      SSH private key whose public half is added as a write deploy key on the
+      mirror repo. Pass the repo's existing SSH secret from the caller workflow.
+    required: true
+  sync-branches:
+    description: "Space-separated branches to sync (e.g. 'main staging')."
+    required: false
+    default: main
+  git-user-name:
+    description: "Git committer name for the empty sync commit."
+    required: false
+    default: "github-actions[bot]"
+  git-user-email:
+    description: "Git committer email for the empty sync commit."
+    required: false
+    default: "41898282+github-actions[bot]@users.noreply.github.com"
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout (full history)
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Load mirror deploy key
+      uses: webfactory/ssh-agent@v0.10.0
+      with:
+        ssh-private-key: ${{ inputs.ssh-private-key }}
+
+    - name: Trust GitHub SSH host
+      shell: bash
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+    - name: Verify source objects
+      shell: bash
+      run: git fsck --no-dangling
+
+    - name: Configure git identity
+      shell: bash
+      env:
+        GIT_USER_NAME: ${{ inputs.git-user-name }}
+        GIT_USER_EMAIL: ${{ inputs.git-user-email }}
+      run: |
+        git config user.name "$GIT_USER_NAME"
+        git config user.email "$GIT_USER_EMAIL"
+
+    - name: Add mirror remote
+      shell: bash
+      env:
+        TARGET_REPO: ${{ inputs.target-repo }}
+      run: git remote add mirror "$TARGET_REPO"
+
+    - name: Sync branches to mirror
+      shell: bash
+      env:
+        SYNC_BRANCHES: ${{ inputs.sync-branches }}
+      run: |
+        set -euo pipefail
+        for branch in $SYNC_BRANCHES; do
+          git check-ref-format --branch "$branch" >/dev/null
+          echo "Syncing $branch -> mirror/$branch"
+          git checkout -B "$branch" "refs/remotes/origin/$branch"
+          git commit --allow-empty -m "chore: sync"
+          git push mirror "HEAD:refs/heads/$branch" --force --no-thin
+        done
