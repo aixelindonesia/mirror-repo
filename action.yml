@@ -1,4 +1,4 @@
-name: Sync to Mirror
+name: Mirror Repo
 description: >-
   Force-push branches from the current repo to a mirror repository using an
   SSH deploy key. Self-contained: checks out full history, loads the key,

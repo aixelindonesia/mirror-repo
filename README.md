@@ -1,4 +1,4 @@
-# sync-to-mirror
+# mirror-repo
 
 A composite GitHub Action that force-pushes branches from the current repository
 to a **mirror repo** using an SSH deploy key. It is the single source of truth
@@ -8,7 +8,7 @@ for the per-repo "sync to mirror" workflows (replaces the hand-copied
 ## Usage
 
 ```yaml
-name: Sync to Mirror
+name: Mirror Repo
 
 on:
   push:
@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: sync-to-mirror-${{ github.ref }}
+  group: mirror-repo-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: aixelindonesia/sync-to-mirror@v1
+      - uses: aixelindonesia/mirror-repo@v1
         with:
           target-repo: git@github.com:OWNER/REPO.git
           sync-branches: main
@@ -64,7 +64,7 @@ jobs:
    **private** key as a secret (any name), and reference that name in
    `ssh-private-key`. If the repo already has a sync secret, reuse it — no
    rename needed.
-4. Add the caller workflow above as `.github/workflows/sync-to-mirror.yml`.
+4. Add the caller workflow above as `.github/workflows/mirror-repo.yml`.
 
 ## Notes
 
