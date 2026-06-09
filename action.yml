@@ -19,12 +19,6 @@ inputs:
       'main staging' or 'dev:main staging:preview').
     required: false
     default: main
-  exclude-paths:
-    description: >-
-      Space-separated paths to remove from the mirrored tree before pushing.
-      When set, the action creates a synthetic mirror commit on top of the
-      target branch instead of pushing the source commit directly.
-    required: false
   git-user-name:
     description: >-
       Git committer name for the empty sync commit. Leave both this and
@@ -100,7 +94,6 @@ runs:
       shell: bash
       env:
         SYNC_BRANCHES: ${{ inputs.sync-branches }}
-        EXCLUDE_PATHS: ${{ inputs.exclude-paths }}
         DO_COMMIT: ${{ inputs.git-user-name != '' && inputs.git-user-email != '' }}
       run: |
         set -euo pipefail
@@ -111,31 +104,10 @@ runs:
           esac
           echo "Checking out $source from origin"
           git checkout -B __mirror_push "refs/remotes/origin/$source"
-          push_ref="HEAD"
-
-          if [ -n "${EXCLUDE_PATHS// /}" ]; then
-            echo "Excluding paths from mirror: $EXCLUDE_PATHS"
-            git fetch mirror "refs/heads/$target:refs/remotes/mirror/$target" || true
-            git rm -r --ignore-unmatch -- $EXCLUDE_PATHS
-            tree="$(git write-tree)"
-            parent_args=()
-            if git rev-parse --verify "refs/remotes/mirror/$target" >/dev/null 2>&1; then
-              parent_args=(-p "refs/remotes/mirror/$target")
-            fi
-            if ! git config user.name >/dev/null || ! git config user.email >/dev/null; then
-              git config user.name "github-actions[bot]"
-              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            fi
-            push_ref="$(printf 'chore: prepare mirror\n' | git commit-tree "$tree" "${parent_args[@]}")"
-          fi
-
           if [ "$DO_COMMIT" = "true" ]; then
-            git checkout -B __mirror_push "$push_ref"
             echo "Empty sync commit on $source"
             git commit --allow-empty -m "chore: sync"
-            push_ref="HEAD"
           fi
-
           echo "Pushing $source -> mirror/$target"
-          git push mirror "$push_ref:refs/heads/$target" --force --no-thin
+          git push mirror "HEAD:refs/heads/$target" --force --no-thin
         done
