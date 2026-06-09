@@ -50,6 +50,7 @@ jobs:
 | `target-repo`     | yes      | —                           | SSH URL of the mirror, `git@github.com:owner/repo.git`   |
 | `ssh-private-key` | yes      | —                           | Private key; pass the repo's existing SSH secret         |
 | `sync-branches`   | no       | `main`                      | Space-separated source branches or `source:target` mappings, e.g. `"main staging"` or `"dev:main"` |
+| `exclude-paths`   | no       | —                           | Space-separated paths to remove from the mirror tree before pushing      |
 | `git-user-name`   | no       | — (skips commit)            | Committer name for the empty sync commit; needs `git-user-email` too    |
 | `git-user-email`  | no       | — (skips commit)            | Committer email; needs `git-user-name` too                              |
 
@@ -79,6 +80,9 @@ jobs:
   from origin by these markers. Leave both empty to mirror branches verbatim
   with no extra commit.
 - The push is `--force` — the mirror branch is overwritten; treat it as one-way.
+- `exclude-paths` creates a synthetic mirror commit on top of the target branch;
+  use it for source-only files that must not be pushed to the mirror (for
+  example, workflow files that deploy keys are not allowed to update).
 - Keep `on.push.branches` in sync with the source branches in `sync-branches`.
 
 ## Versioning
