@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.2 - 2026-11-22
+
+### Changed
+
+- The repository carries the MIT licence.
+
 ## v1.5.1 - 2026-11-22
 
 ### Changed
