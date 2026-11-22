@@ -1,6 +1,7 @@
----
-bump: patch
----
+# Changelog
+
+## v1.5.1 - 2026-11-22
+
 ### Changed
 
 - The action file is `action.yaml`; callers of `aixelindonesia/mirror-repo@v1` need no change.
