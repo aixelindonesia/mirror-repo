@@ -1,7 +1,3 @@
----
-status: draft
----
-
 # What mirror-repo is
 
 `mirror-repo` is a composite GitHub Action that force-pushes chosen branches of the calling repository to a mirror repository over SSH with a deploy key.

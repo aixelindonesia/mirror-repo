@@ -1,7 +1,3 @@
----
-status: draft
----
-
 # mirror-repo documentation
 
 - [What it is](foundation/what-it-is.md)
